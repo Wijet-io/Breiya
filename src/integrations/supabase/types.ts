@@ -101,6 +101,47 @@ export type Database = {
           },
         ]
       }
+      oauth_tokens: {
+        Row: {
+          access_token: string
+          created_at: string
+          email_account_id: string | null
+          expires_at: string | null
+          id: string
+          refresh_token: string | null
+          scope: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          email_account_id?: string | null
+          expires_at?: string | null
+          id?: string
+          refresh_token?: string | null
+          scope?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          email_account_id?: string | null
+          expires_at?: string | null
+          id?: string
+          refresh_token?: string | null
+          scope?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oauth_tokens_email_account_id_fkey"
+            columns: ["email_account_id"]
+            isOneToOne: false
+            referencedRelation: "email_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string

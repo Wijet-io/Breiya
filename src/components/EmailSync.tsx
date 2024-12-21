@@ -2,15 +2,9 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { Database } from "@/integrations/supabase/types";
 
-interface OAuthToken {
-  id: string;
-  email_account_id: string;
-  access_token: string;
-  refresh_token: string | null;
-  expires_at: string | null;
-  scope: string[];
-}
+type OAuthToken = Database["public"]["Tables"]["oauth_tokens"]["Row"];
 
 export function EmailSync({ accountId, provider }: { accountId: string; provider: string }) {
   const { toast } = useToast();
