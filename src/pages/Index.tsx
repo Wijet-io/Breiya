@@ -1,5 +1,5 @@
-import { EmailList } from "@/components/EmailList";
-import { AccountSelector } from "@/components/AccountSelector";
+import { EmailList } from "@/features/email/components/EmailList";
+import { AccountSelector } from "@/features/email/components/AccountSelector";
 import { ScoreCard } from "@/components/ScoreCard";
 import { UserNav } from "@/components/UserNav";
 import { Separator } from "@/components/ui/separator";
