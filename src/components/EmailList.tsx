@@ -7,15 +7,16 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ShareEmailAccountDialog } from "./ShareEmailAccountDialog";
 
-interface Email {
+interface EmailAccount {
   id: string;
-  subject: string;
-  sender: string;
-  preview: string;
-  date: string;
-  isStarred: boolean;
-  accountId: string;
-  accountColor: string;
+  email: string;
+  provider: string;
+  color: string;
+  display_name: string | null;
+  user_id: string;
+  account_permissions?: {
+    permission_level: string;
+  }[];
 }
 
 export function EmailList() {
@@ -24,12 +25,17 @@ export function EmailList() {
   const { data: emailAccounts, isLoading: isLoadingAccounts } = useQuery({
     queryKey: ["emailAccounts"],
     queryFn: async () => {
+      console.log("Fetching email accounts...");
+      
       // Récupérer les comptes email de l'utilisateur
       const { data: ownedAccounts, error: ownedError } = await supabase
         .from("email_accounts")
         .select("*");
       
-      if (ownedError) throw ownedError;
+      if (ownedError) {
+        console.error("Error fetching owned accounts:", ownedError);
+        throw ownedError;
+      }
 
       // Récupérer les comptes email partagés avec l'utilisateur
       const { data: sharedAccounts, error: sharedError } = await supabase
@@ -42,28 +48,17 @@ export function EmailList() {
         `)
         .neq("user_id", (await supabase.auth.getUser()).data.user?.id);
       
-      if (sharedError) throw sharedError;
+      if (sharedError) {
+        console.error("Error fetching shared accounts:", sharedError);
+        throw sharedError;
+      }
 
-      return [...(ownedAccounts || []), ...(sharedAccounts || [])];
+      console.log("Owned accounts:", ownedAccounts);
+      console.log("Shared accounts:", sharedAccounts);
+
+      return [...(ownedAccounts || []), ...(sharedAccounts || [])] as EmailAccount[];
     },
   });
-
-  const handleStar = (emailId: string) => {
-    console.log("Starring email:", emailId);
-    toast({
-      title: "Email marqué",
-      description: "L'email a été ajouté à vos favoris",
-    });
-  };
-
-  const handleDelete = (emailId: string) => {
-    console.log("Deleting email:", emailId);
-    toast({
-      title: "Email supprimé",
-      description: "L'email a été déplacé vers la corbeille",
-      variant: "destructive",
-    });
-  };
 
   if (isLoadingAccounts) {
     return <div>Chargement des comptes...</div>;
@@ -92,9 +87,9 @@ export function EmailList() {
                 <Badge variant="outline">
                   {account.display_name || "Sans nom"}
                 </Badge>
-                {account.account_permissions && (
+                {account.account_permissions && account.account_permissions[0] && (
                   <Badge variant="secondary">
-                    Partagé ({account.account_permissions.permission_level})
+                    Partagé ({account.account_permissions[0].permission_level})
                   </Badge>
                 )}
               </div>
