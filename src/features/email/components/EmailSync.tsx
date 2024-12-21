@@ -1,139 +1,60 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
-import { Database } from "@/integrations/supabase/types";
+import { Progress } from "@/components/ui/progress";
 import { Loader2 } from "lucide-react";
+import type { EmailProvider } from "../types";
 
-type OAuthToken = Database["public"]["Tables"]["oauth_tokens"]["Row"];
+interface EmailSyncProps {
+  accountId: string;
+  provider: EmailProvider;
+}
 
-export function EmailSync({ accountId, provider }: { accountId: string; provider: string }) {
-  const { toast } = useToast();
+export function EmailSync({ accountId, provider }: EmailSyncProps) {
+  const [progress, setProgress] = useState(0);
+  const [syncing, setSyncing] = useState(false);
 
-  const { data: token, isLoading } = useQuery({
-    queryKey: ["oauthToken", accountId],
-    queryFn: async () => {
-      console.log("Fetching OAuth token for account:", accountId);
-      const { data, error } = await supabase
-        .from("oauth_tokens")
-        .select("*")
-        .eq("email_account_id", accountId)
-        .single();
+  useEffect(() => {
+    if (syncing) {
+      const timer = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(timer);
+            setSyncing(false);
+            return 100;
+          }
+          return prev + 10;
+        });
+      }, 500);
 
-      if (error) {
-        console.error("Error fetching OAuth token:", error);
-        return null;
-      }
-
-      return data as OAuthToken;
-    },
-  });
-
-  const handleAuthorize = async () => {
-    try {
-      console.log("Starting OAuth authorization for provider:", provider);
-      let authUrl = "";
-      const redirectUri = `${window.location.origin}/oauth/callback`;
-
-      // Récupérer les clés OAuth depuis Supabase
-      const { data: config, error: configError } = await supabase.functions.invoke("get-oauth-config", {
-        body: { provider },
-      });
-
-      if (configError) {
-        console.error("Error fetching OAuth config:", configError);
-        throw configError;
-      }
-
-      console.log("OAuth config received:", config);
-
-      switch (provider) {
-        case "gmail":
-          authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-            `client_id=${config.clientId}` +
-            `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-            `&response_type=code` +
-            `&scope=${encodeURIComponent("https://www.googleapis.com/auth/gmail.readonly")}` +
-            `&access_type=offline` +
-            `&prompt=consent` +
-            `&state=${accountId}`;
-          break;
-        case "outlook":
-          authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?` +
-            `client_id=${config.clientId}` +
-            `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-            `&response_type=code` +
-            `&scope=${encodeURIComponent("offline_access Mail.Read")}` +
-            `&state=${accountId}`;
-          break;
-        default:
-          throw new Error("Provider non supporté");
-      }
-
-      console.log("Redirecting to OAuth URL:", authUrl);
-      window.location.href = authUrl;
-    } catch (error) {
-      console.error("Error during authorization:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de lancer l'autorisation",
-        variant: "destructive",
-      });
+      return () => clearInterval(timer);
     }
+  }, [syncing]);
+
+  const handleSync = () => {
+    console.log("Starting sync for account:", accountId);
+    setSyncing(true);
+    setProgress(0);
   };
-
-  const handleRevoke = async () => {
-    try {
-      console.log("Revoking OAuth token for account:", accountId);
-      const { error } = await supabase
-        .from("oauth_tokens")
-        .delete()
-        .eq("email_account_id", accountId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Accès révoqué",
-        description: "L'accès à votre compte email a été révoqué",
-      });
-    } catch (error) {
-      console.error("Error revoking access:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de révoquer l'accès",
-        variant: "destructive",
-      });
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <Button variant="outline" className="w-full" disabled>
-        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-        Chargement...
-      </Button>
-    );
-  }
 
   return (
-    <div>
-      {token ? (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
         <Button
-          variant="destructive"
-          onClick={handleRevoke}
-          className="w-full"
+          variant="outline"
+          size="sm"
+          onClick={handleSync}
+          disabled={syncing}
         >
-          Révoquer l'accès
+          {syncing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Synchroniser
         </Button>
-      ) : (
-        <Button
-          variant="secondary"
-          onClick={handleAuthorize}
-          className="w-full"
-        >
-          Autoriser la synchronisation
-        </Button>
-      )}
+        {syncing && (
+          <span className="text-sm text-muted-foreground">
+            {progress}% synchronisé
+          </span>
+        )}
+      </div>
+      {syncing && <Progress value={progress} className="h-2" />}
     </div>
   );
 }
