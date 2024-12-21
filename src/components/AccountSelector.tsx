@@ -45,12 +45,14 @@ export function AccountSelector() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Comptes Email</h2>
-        <AddEmailAccountDialog>
-          <Button variant="outline" size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter
-          </Button>
-        </AddEmailAccountDialog>
+        <AddEmailAccountDialog
+          trigger={
+            <Button variant="outline" size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Ajouter
+            </Button>
+          }
+        />
       </div>
       
       <div className="space-y-2">
