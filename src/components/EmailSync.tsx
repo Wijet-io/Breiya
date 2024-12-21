@@ -3,6 +3,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Database } from "@/integrations/supabase/types";
+import { Loader2 } from "lucide-react";
 
 type OAuthToken = Database["public"]["Tables"]["oauth_tokens"]["Row"];
 
@@ -44,13 +45,15 @@ export function EmailSync({ accountId, provider }: { accountId: string; provider
         throw configError;
       }
 
+      console.log("OAuth config received:", config);
+
       switch (provider) {
         case "gmail":
           authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
             `client_id=${config.clientId}` +
-            `&redirect_uri=${redirectUri}` +
+            `&redirect_uri=${encodeURIComponent(redirectUri)}` +
             `&response_type=code` +
-            `&scope=https://www.googleapis.com/auth/gmail.readonly` +
+            `&scope=${encodeURIComponent("https://www.googleapis.com/auth/gmail.readonly")}` +
             `&access_type=offline` +
             `&prompt=consent` +
             `&state=${accountId}`;
@@ -58,16 +61,16 @@ export function EmailSync({ accountId, provider }: { accountId: string; provider
         case "outlook":
           authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?` +
             `client_id=${config.clientId}` +
-            `&redirect_uri=${redirectUri}` +
+            `&redirect_uri=${encodeURIComponent(redirectUri)}` +
             `&response_type=code` +
-            `&scope=offline_access Mail.Read` +
+            `&scope=${encodeURIComponent("offline_access Mail.Read")}` +
             `&state=${accountId}`;
           break;
         default:
           throw new Error("Provider non supporté");
       }
 
-      console.log("Redirecting to OAuth URL...");
+      console.log("Redirecting to OAuth URL:", authUrl);
       window.location.href = authUrl;
     } catch (error) {
       console.error("Error during authorization:", error);
@@ -104,11 +107,16 @@ export function EmailSync({ accountId, provider }: { accountId: string; provider
   };
 
   if (isLoading) {
-    return <div>Chargement...</div>;
+    return (
+      <Button variant="outline" className="w-full" disabled>
+        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+        Chargement...
+      </Button>
+    );
   }
 
   return (
-    <div className="mt-4">
+    <div>
       {token ? (
         <Button
           variant="destructive"
