@@ -30,14 +30,24 @@ export function EmailSync({ accountId, provider }: { accountId: string; provider
 
   const handleAuthorize = async () => {
     try {
-      // Créer l'URL d'autorisation en fonction du provider
+      console.log("Starting OAuth authorization for provider:", provider);
       let authUrl = "";
       const redirectUri = `${window.location.origin}/oauth/callback`;
+
+      // Récupérer les clés OAuth depuis Supabase
+      const { data: config, error: configError } = await supabase.functions.invoke("get-oauth-config", {
+        body: { provider },
+      });
+
+      if (configError) {
+        console.error("Error fetching OAuth config:", configError);
+        throw configError;
+      }
 
       switch (provider) {
         case "gmail":
           authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-            `client_id=${process.env.GOOGLE_CLIENT_ID}` +
+            `client_id=${config.clientId}` +
             `&redirect_uri=${redirectUri}` +
             `&response_type=code` +
             `&scope=https://www.googleapis.com/auth/gmail.readonly` +
@@ -47,7 +57,7 @@ export function EmailSync({ accountId, provider }: { accountId: string; provider
           break;
         case "outlook":
           authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?` +
-            `client_id=${process.env.MICROSOFT_CLIENT_ID}` +
+            `client_id=${config.clientId}` +
             `&redirect_uri=${redirectUri}` +
             `&response_type=code` +
             `&scope=offline_access Mail.Read` +
@@ -57,7 +67,7 @@ export function EmailSync({ accountId, provider }: { accountId: string; provider
           throw new Error("Provider non supporté");
       }
 
-      // Ouvrir la fenêtre d'autorisation
+      console.log("Redirecting to OAuth URL...");
       window.location.href = authUrl;
     } catch (error) {
       console.error("Error during authorization:", error);
@@ -71,6 +81,7 @@ export function EmailSync({ accountId, provider }: { accountId: string; provider
 
   const handleRevoke = async () => {
     try {
+      console.log("Revoking OAuth token for account:", accountId);
       const { error } = await supabase
         .from("oauth_tokens")
         .delete()

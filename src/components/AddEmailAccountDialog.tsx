@@ -21,6 +21,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function AddEmailAccountDialog() {
   const [open, setOpen] = useState(false);
@@ -28,9 +29,11 @@ export function AddEmailAccountDialog() {
   const [provider, setProvider] = useState<string>("");
   const [displayName, setDisplayName] = useState("");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Submitting new email account...");
     
     try {
       const {
@@ -38,6 +41,7 @@ export function AddEmailAccountDialog() {
       } = await supabase.auth.getUser();
 
       if (!user) {
+        console.error("No user found");
         toast({
           title: "Erreur",
           description: "Vous devez être connecté pour ajouter un compte email",
@@ -46,10 +50,10 @@ export function AddEmailAccountDialog() {
         return;
       }
 
-      // Générer une couleur aléatoire
       const colors = ["#DB4437", "#4285F4", "#0072C6", "#34A853", "#7E69AB"];
       const randomColor = colors[Math.floor(Math.random() * colors.length)];
 
+      console.log("Adding email account to database...");
       const { error } = await supabase.from("email_accounts").insert({
         email,
         provider,
@@ -58,7 +62,13 @@ export function AddEmailAccountDialog() {
         user_id: user.id,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error adding email account:", error);
+        throw error;
+      }
+
+      console.log("Email account added successfully");
+      await queryClient.invalidateQueries({ queryKey: ["emailAccounts"] });
 
       toast({
         title: "Compte ajouté",
