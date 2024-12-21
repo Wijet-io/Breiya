@@ -1,4 +1,4 @@
-import { Mail, Share2 } from "lucide-react";
+import { Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -28,30 +28,31 @@ export function EmailList() {
     queryFn: async () => {
       console.log("Fetching email accounts...");
       
-      // Récupérer les comptes email de l'utilisateur
+      // Fetch owned accounts
       const { data: ownedAccounts, error: ownedError } = await supabase
         .from("email_accounts")
-        .select("*");
+        .select("*, account_permissions(permission_level)")
+        .eq("user_id", (await supabase.auth.getUser()).data.user?.id);
       
       if (ownedError) {
         console.error("Error fetching owned accounts:", ownedError);
-        throw ownedError;
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger vos comptes email",
+          variant: "destructive",
+        });
+        return [];
       }
 
-      // Récupérer les comptes email partagés avec l'utilisateur
+      // Fetch shared accounts
       const { data: sharedAccounts, error: sharedError } = await supabase
         .from("email_accounts")
-        .select(`
-          *,
-          account_permissions!inner (
-            permission_level
-          )
-        `)
+        .select("*, account_permissions!inner(permission_level)")
         .neq("user_id", (await supabase.auth.getUser()).data.user?.id);
       
       if (sharedError) {
         console.error("Error fetching shared accounts:", sharedError);
-        throw sharedError;
+        return ownedAccounts || [];
       }
 
       console.log("Owned accounts:", ownedAccounts);
