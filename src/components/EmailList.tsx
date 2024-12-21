@@ -1,4 +1,4 @@
-import { Mail, Star, Trash, Share2 } from "lucide-react";
+import { Mail, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ShareEmailAccountDialog } from "./ShareEmailAccountDialog";
+import { EmailSync } from "./EmailSync";
 
 interface EmailAccount {
   id: string;
@@ -101,6 +102,11 @@ export function EmailList() {
               />
             </div>
           </div>
+          
+          <EmailSync 
+            accountId={account.id}
+            provider={account.provider}
+          />
         </Card>
       ))}
     </div>
