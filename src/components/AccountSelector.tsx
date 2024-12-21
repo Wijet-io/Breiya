@@ -1,45 +1,11 @@
-import { Check, Plus, Share2 } from "lucide-react";
-import { Card } from "./ui/card";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { AddEmailAccountDialog } from "./AddEmailAccountDialog";
+import { Plus } from "lucide-react";
 import { Button } from "./ui/button";
-import { ShareEmailAccountDialog } from "./ShareEmailAccountDialog";
-import { EmailSync } from "./EmailSync";
-
-interface EmailAccount {
-  id: string;
-  email: string;
-  provider: string;
-  color: string;
-  display_name: string | null;
-}
+import { AddEmailAccountDialog } from "./AddEmailAccountDialog";
+import { EmailAccountCard } from "./email/EmailAccountCard";
+import { useEmailAccounts } from "@/hooks/useEmailAccounts";
 
 export function AccountSelector() {
-  const { toast } = useToast();
-  
-  const { data: accounts, isLoading } = useQuery({
-    queryKey: ["emailAccounts"],
-    queryFn: async () => {
-      console.log("Fetching email accounts...");
-      const { data, error } = await supabase
-        .from("email_accounts")
-        .select("*");
-      
-      if (error) {
-        console.error("Error fetching email accounts:", error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger vos comptes email",
-          variant: "destructive",
-        });
-        throw error;
-      }
-      
-      return data as EmailAccount[];
-    },
-  });
+  const { data: accounts, isLoading } = useEmailAccounts();
 
   if (isLoading) {
     return (
@@ -53,7 +19,7 @@ export function AccountSelector() {
         </div>
         <div className="space-y-2">
           {[1, 2].map((i) => (
-            <Card key={i} className="p-3 animate-pulse bg-gray-100" />
+            <div key={i} className="p-3 animate-pulse bg-gray-100 rounded-lg" />
           ))}
         </div>
       </div>
@@ -76,33 +42,7 @@ export function AccountSelector() {
       
       <div className="space-y-3">
         {accounts?.map((account) => (
-          <Card
-            key={account.id}
-            className="p-4 transition-all hover:shadow-md"
-            style={{ borderLeft: `4px solid ${account.color}` }}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex flex-col">
-                <span className="font-medium">
-                  {account.display_name || account.email}
-                </span>
-                <span className="text-sm text-muted-foreground capitalize">
-                  {account.provider}
-                </span>
-              </div>
-              <ShareEmailAccountDialog
-                emailAccountId={account.id}
-                emailAddress={account.email}
-                trigger={
-                  <Button variant="ghost" size="sm">
-                    <Share2 className="h-4 w-4 mr-2" />
-                    Partager
-                  </Button>
-                }
-              />
-            </div>
-            <EmailSync accountId={account.id} provider={account.provider} />
-          </Card>
+          <EmailAccountCard key={account.id} account={account} variant="compact" />
         ))}
 
         {accounts?.length === 0 && (
