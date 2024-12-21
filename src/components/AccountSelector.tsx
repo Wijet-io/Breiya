@@ -1,9 +1,9 @@
-import { Check, Plus } from "lucide-react";
-import { Button } from "./ui/button";
+import { Check } from "lucide-react";
 import { Card } from "./ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { AddEmailAccountDialog } from "./AddEmailAccountDialog";
 
 interface EmailAccount {
   id: string;
@@ -63,10 +63,7 @@ export function AccountSelector() {
             <Check className="h-4 w-4 text-green-500" />
           </Card>
         ))}
-        <Button className="w-full" variant="outline">
-          <Plus className="h-4 w-4 mr-2" />
-          Ajouter un compte
-        </Button>
+        <AddEmailAccountDialog />
       </div>
     </div>
   );
