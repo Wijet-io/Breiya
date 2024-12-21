@@ -20,14 +20,14 @@ import {
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Share2 } from "lucide-react";
 
 interface ShareEmailAccountDialogProps {
   emailAccountId: string;
   emailAddress: string;
+  trigger: React.ReactNode;
 }
 
-export function ShareEmailAccountDialog({ emailAccountId, emailAddress }: ShareEmailAccountDialogProps) {
+export function ShareEmailAccountDialog({ emailAccountId, emailAddress, trigger }: ShareEmailAccountDialogProps) {
   const [open, setOpen] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [permissionLevel, setPermissionLevel] = useState<string>("read");
@@ -35,6 +35,7 @@ export function ShareEmailAccountDialog({ emailAccountId, emailAddress }: ShareE
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Attempting to share email account...");
     
     try {
       // Vérifier si l'utilisateur existe
@@ -45,6 +46,7 @@ export function ShareEmailAccountDialog({ emailAccountId, emailAddress }: ShareE
         .single();
 
       if (profileError || !profiles) {
+        console.error("User not found:", profileError);
         toast({
           title: "Erreur",
           description: "Utilisateur non trouvé",
@@ -53,6 +55,7 @@ export function ShareEmailAccountDialog({ emailAccountId, emailAddress }: ShareE
         return;
       }
 
+      console.log("Found user profile, adding permission...");
       // Ajouter la permission
       const { error } = await supabase.from("account_permissions").insert({
         email_account_id: emailAccountId,
@@ -60,8 +63,12 @@ export function ShareEmailAccountDialog({ emailAccountId, emailAddress }: ShareE
         permission_level: permissionLevel,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error adding permission:", error);
+        throw error;
+      }
 
+      console.log("Successfully shared email account");
       toast({
         title: "Accès partagé",
         description: `L'accès a été partagé avec ${userEmail}`,
@@ -83,10 +90,7 @@ export function ShareEmailAccountDialog({ emailAccountId, emailAddress }: ShareE
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Share2 className="h-4 w-4 mr-2" />
-          Partager
-        </Button>
+        {trigger}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
