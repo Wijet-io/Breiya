@@ -23,7 +23,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
-export function AddEmailAccountDialog() {
+interface AddEmailAccountDialogProps {
+  trigger: React.ReactNode;
+}
+
+export function AddEmailAccountDialog({ trigger }: AddEmailAccountDialogProps) {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [provider, setProvider] = useState<string>("");
@@ -92,10 +96,7 @@ export function AddEmailAccountDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full" variant="outline">
-          <Plus className="h-4 w-4 mr-2" />
-          Ajouter un compte
-        </Button>
+        {trigger}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
