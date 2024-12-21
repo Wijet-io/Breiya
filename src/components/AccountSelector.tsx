@@ -1,35 +1,50 @@
-import { Check } from "lucide-react";
+import { Check, Plus } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-interface Account {
+interface EmailAccount {
   id: string;
   email: string;
-  provider: "gmail" | "outlook" | "other";
+  provider: string;
   color: string;
+  display_name: string | null;
 }
 
-const mockAccounts: Account[] = [
-  {
-    id: "1",
-    email: "pro@breiya.com",
-    provider: "gmail",
-    color: "#DB4437",
-  },
-  {
-    id: "2",
-    email: "perso@breiya.com",
-    provider: "outlook",
-    color: "#0072C6",
-  },
-];
-
 export function AccountSelector() {
+  const { toast } = useToast();
+  
+  const { data: accounts, isLoading } = useQuery({
+    queryKey: ["emailAccounts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("email_accounts")
+        .select("*");
+      
+      if (error) {
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger vos comptes email",
+          variant: "destructive",
+        });
+        throw error;
+      }
+      
+      return data as EmailAccount[];
+    },
+  });
+
+  if (isLoading) {
+    return <div>Chargement...</div>;
+  }
+
   return (
     <div className="space-y-2">
       <h2 className="text-lg font-semibold mb-4">Comptes Email</h2>
       <div className="space-y-2">
-        {mockAccounts.map((account) => (
+        {accounts?.map((account) => (
           <Card
             key={account.id}
             className="p-3 flex items-center justify-between hover:shadow-md transition-shadow cursor-pointer"
@@ -37,7 +52,9 @@ export function AccountSelector() {
           >
             <div className="flex items-center space-x-3">
               <div className="flex flex-col">
-                <span className="font-medium">{account.email}</span>
+                <span className="font-medium">
+                  {account.display_name || account.email}
+                </span>
                 <span className="text-sm text-gray-500 capitalize">
                   {account.provider}
                 </span>
@@ -47,6 +64,7 @@ export function AccountSelector() {
           </Card>
         ))}
         <Button className="w-full" variant="outline">
+          <Plus className="h-4 w-4 mr-2" />
           Ajouter un compte
         </Button>
       </div>

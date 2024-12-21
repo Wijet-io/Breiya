@@ -9,7 +9,131 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      account_permissions: {
+        Row: {
+          created_at: string
+          email_account_id: string
+          granted_to_user_id: string
+          id: string
+          permission_level: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email_account_id: string
+          granted_to_user_id: string
+          id?: string
+          permission_level: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email_account_id?: string
+          granted_to_user_id?: string
+          id?: string
+          permission_level?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_permissions_email_account_id_fkey"
+            columns: ["email_account_id"]
+            isOneToOne: false
+            referencedRelation: "email_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_permissions_granted_to_user_id_fkey"
+            columns: ["granted_to_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_accounts: {
+        Row: {
+          color: string
+          created_at: string
+          credentials: Json | null
+          display_name: string | null
+          email: string
+          id: string
+          is_active: boolean | null
+          last_sync_at: string | null
+          provider: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          credentials?: Json | null
+          display_name?: string | null
+          email: string
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          provider: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          credentials?: Json | null
+          display_name?: string | null
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          provider?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          subscription_status: string | null
+          subscription_tier: string | null
+          trial_ends_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          subscription_status?: string | null
+          subscription_tier?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          subscription_status?: string | null
+          subscription_tier?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
