@@ -1,8 +1,11 @@
-import { Mail, Star, Trash } from "lucide-react";
+import { Mail, Star, Trash, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { ShareEmailAccountDialog } from "./ShareEmailAccountDialog";
 
 interface Email {
   id: string;
@@ -15,31 +18,35 @@ interface Email {
   accountColor: string;
 }
 
-const mockEmails: Email[] = [
-  {
-    id: "1",
-    subject: "Welcome to BREIYA",
-    sender: "team@breiya.com",
-    preview: "Get started with your email management journey...",
-    date: "2024-02-20",
-    isStarred: false,
-    accountId: "1",
-    accountColor: "#DB4437",
-  },
-  {
-    id: "2",
-    subject: "Your first achievement!",
-    sender: "achievements@breiya.com",
-    preview: "Congratulations! You've earned your first badge...",
-    date: "2024-02-20",
-    isStarred: true,
-    accountId: "2",
-    accountColor: "#0072C6",
-  },
-];
-
 export function EmailList() {
   const { toast } = useToast();
+  
+  const { data: emailAccounts, isLoading: isLoadingAccounts } = useQuery({
+    queryKey: ["emailAccounts"],
+    queryFn: async () => {
+      // Récupérer les comptes email de l'utilisateur
+      const { data: ownedAccounts, error: ownedError } = await supabase
+        .from("email_accounts")
+        .select("*");
+      
+      if (ownedError) throw ownedError;
+
+      // Récupérer les comptes email partagés avec l'utilisateur
+      const { data: sharedAccounts, error: sharedError } = await supabase
+        .from("email_accounts")
+        .select(`
+          *,
+          account_permissions!inner (
+            permission_level
+          )
+        `)
+        .neq("user_id", (await supabase.auth.getUser()).data.user?.id);
+      
+      if (sharedError) throw sharedError;
+
+      return [...(ownedAccounts || []), ...(sharedAccounts || [])];
+    },
+  });
 
   const handleStar = (emailId: string) => {
     console.log("Starring email:", emailId);
@@ -58,6 +65,10 @@ export function EmailList() {
     });
   };
 
+  if (isLoadingAccounts) {
+    return <div>Chargement des comptes...</div>;
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-6">
@@ -68,43 +79,33 @@ export function EmailList() {
         </Button>
       </div>
       
-      {mockEmails.map((email) => (
+      {emailAccounts?.map((account) => (
         <Card
-          key={email.id}
-          className="p-4 hover:shadow-lg transition-shadow animate-fade-in"
-          style={{ borderLeft: `4px solid ${email.accountColor}` }}
+          key={account.id}
+          className="p-4 hover:shadow-lg transition-shadow"
+          style={{ borderLeft: `4px solid ${account.color}` }}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-semibold text-lg">{email.subject}</h3>
-                <Badge variant="outline" className="text-xs">
-                  {email.accountId === "1" ? "Pro" : "Perso"}
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-semibold text-lg">{account.email}</h3>
+              <div className="flex gap-2">
+                <Badge variant="outline">
+                  {account.display_name || "Sans nom"}
                 </Badge>
+                {account.account_permissions && (
+                  <Badge variant="secondary">
+                    Partagé ({account.account_permissions.permission_level})
+                  </Badge>
+                )}
               </div>
-              <p className="text-sm text-gray-600">{email.sender}</p>
-              <p className="text-sm mt-2">{email.preview}</p>
             </div>
             <div className="flex items-center space-x-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleStar(email.id)}
-                className={email.isStarred ? "text-yellow-400" : ""}
-              >
-                <Star className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleDelete(email.id)}
-                className="text-red-400"
-              >
-                <Trash className="h-4 w-4" />
-              </Button>
+              <ShareEmailAccountDialog 
+                emailAccountId={account.id}
+                emailAddress={account.email}
+              />
             </div>
           </div>
-          <div className="mt-2 text-xs text-gray-400">{email.date}</div>
         </Card>
       ))}
     </div>
