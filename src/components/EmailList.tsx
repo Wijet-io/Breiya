@@ -28,11 +28,19 @@ export function EmailList() {
     queryFn: async () => {
       console.log("Fetching email accounts...");
       
+      const user = await supabase.auth.getUser();
+      const userId = user.data.user?.id;
+      
+      if (!userId) {
+        console.error("No user ID found");
+        return [];
+      }
+
       // Fetch owned accounts
       const { data: ownedAccounts, error: ownedError } = await supabase
         .from("email_accounts")
         .select("*, account_permissions(permission_level)")
-        .eq("user_id", (await supabase.auth.getUser()).data.user?.id);
+        .eq("user_id", userId);
       
       if (ownedError) {
         console.error("Error fetching owned accounts:", ownedError);
@@ -48,7 +56,7 @@ export function EmailList() {
       const { data: sharedAccounts, error: sharedError } = await supabase
         .from("email_accounts")
         .select("*, account_permissions!inner(permission_level)")
-        .neq("user_id", (await supabase.auth.getUser()).data.user?.id);
+        .neq("user_id", userId);
       
       if (sharedError) {
         console.error("Error fetching shared accounts:", sharedError);
