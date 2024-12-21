@@ -26,47 +26,48 @@ export function EmailList() {
   const { data: emailAccounts, isLoading: isLoadingAccounts } = useQuery({
     queryKey: ["emailAccounts"],
     queryFn: async () => {
-      console.log("Fetching email accounts...");
-      
-      const user = await supabase.auth.getUser();
-      const userId = user.data.user?.id;
-      
-      if (!userId) {
-        console.error("No user ID found");
-        return [];
-      }
+      try {
+        console.log("Fetching email accounts...");
+        
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError) {
+          console.error("Error fetching user:", userError);
+          throw userError;
+        }
+        
+        if (!user?.id) {
+          console.error("No user ID found");
+          return [];
+        }
 
-      // Fetch owned accounts
-      const { data: ownedAccounts, error: ownedError } = await supabase
-        .from("email_accounts")
-        .select("*, account_permissions(permission_level)")
-        .eq("user_id", userId);
-      
-      if (ownedError) {
-        console.error("Error fetching owned accounts:", ownedError);
+        // Fetch both owned and shared accounts in a single query
+        const { data, error } = await supabase
+          .from("email_accounts")
+          .select("*, account_permissions(permission_level)")
+          .or(`user_id.eq.${user.id},account_permissions.granted_to_user_id.eq.${user.id}`);
+        
+        if (error) {
+          console.error("Error fetching accounts:", error);
+          toast({
+            title: "Erreur",
+            description: "Impossible de charger vos comptes email",
+            variant: "destructive",
+          });
+          return [];
+        }
+
+        console.log("Fetched accounts:", data);
+        return data as EmailAccount[];
+      } catch (error) {
+        console.error("Unexpected error:", error);
         toast({
           title: "Erreur",
-          description: "Impossible de charger vos comptes email",
+          description: "Une erreur inattendue s'est produite",
           variant: "destructive",
         });
         return [];
       }
-
-      // Fetch shared accounts
-      const { data: sharedAccounts, error: sharedError } = await supabase
-        .from("email_accounts")
-        .select("*, account_permissions!inner(permission_level)")
-        .neq("user_id", userId);
-      
-      if (sharedError) {
-        console.error("Error fetching shared accounts:", sharedError);
-        return ownedAccounts || [];
-      }
-
-      console.log("Owned accounts:", ownedAccounts);
-      console.log("Shared accounts:", sharedAccounts);
-
-      return [...(ownedAccounts || []), ...(sharedAccounts || [])] as EmailAccount[];
     },
   });
 
