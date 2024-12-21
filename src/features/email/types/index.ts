@@ -1,12 +1,12 @@
 export interface EmailAccount {
   id: string;
   email: string;
-  provider: string;
+  provider: EmailProvider;
   color: string;
   display_name: string | null;
   user_id: string;
   account_permissions?: {
-    permission_level: string;
+    permission_level: PermissionLevel;
   }[];
 }
 

@@ -12,6 +12,8 @@ interface EmailAccountCardProps {
 }
 
 export function EmailAccountCard({ account, variant = "full" }: EmailAccountCardProps) {
+  console.log("Rendering EmailAccountCard:", { account, variant });
+  
   return (
     <Card
       key={account.id}
