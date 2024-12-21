@@ -41,11 +41,15 @@ export function EmailList() {
           return [];
         }
 
-        // Fetch both owned and shared accounts in a single query
+        // Simplified query that relies on RLS policies instead of complex OR conditions
         const { data, error } = await supabase
           .from("email_accounts")
-          .select("*, account_permissions(permission_level)")
-          .or(`user_id.eq.${user.id},account_permissions.granted_to_user_id.eq.${user.id}`);
+          .select(`
+            *,
+            account_permissions (
+              permission_level
+            )
+          `);
         
         if (error) {
           console.error("Error fetching accounts:", error);
