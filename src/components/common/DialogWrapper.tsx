@@ -6,15 +6,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import type { DialogTriggerProps, WithChildren } from "@/types/ui";
 import { useState } from "react";
 
-interface DialogWrapperProps {
-  trigger: React.ReactNode;
+interface DialogWrapperProps extends DialogTriggerProps, WithChildren {
   title: string;
   description?: string;
-  children: React.ReactNode;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
 }
 
 export function DialogWrapper({

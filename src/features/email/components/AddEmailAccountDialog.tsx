@@ -11,11 +11,10 @@ import {
 import { useState } from "react";
 import { DialogWrapper } from "@/components/common/DialogWrapper";
 import { useEmailAccountMutations } from "../hooks/useEmailAccountMutations";
+import { DialogTriggerProps } from "@/types/ui";
 import type { EmailProvider } from "../types";
 
-interface AddEmailAccountDialogProps {
-  trigger: React.ReactNode;
-}
+type AddEmailAccountDialogProps = DialogTriggerProps;
 
 export function AddEmailAccountDialog({ trigger }: AddEmailAccountDialogProps) {
   const [open, setOpen] = useState(false);

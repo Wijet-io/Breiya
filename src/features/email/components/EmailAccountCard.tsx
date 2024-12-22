@@ -4,9 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Share2 } from "lucide-react";
 import { EmailSync } from "./EmailSync";
 import { ShareEmailAccountDialog } from "./ShareEmailAccountDialog";
+import { WithClassName } from "@/types/ui";
 import type { EmailAccount } from "../types";
 
-interface EmailAccountCardProps {
+interface EmailAccountCardProps extends WithClassName {
   account: EmailAccount;
   variant?: "compact" | "full";
 }

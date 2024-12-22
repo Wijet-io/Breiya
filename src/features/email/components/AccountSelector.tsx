@@ -2,7 +2,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddEmailAccountDialog } from "./AddEmailAccountDialog";
 import { EmailAccountCard } from "./EmailAccountCard";
-import { useEmailAccounts } from "../hooks/useEmailAccounts";
+import { useEmailAccounts } from "@/features/email/hooks/useEmailAccounts";
 
 export function AccountSelector() {
   const { data: accounts, isLoading } = useEmailAccounts();

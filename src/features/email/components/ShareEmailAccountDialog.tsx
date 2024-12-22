@@ -11,12 +11,12 @@ import {
 import { useState } from "react";
 import { DialogWrapper } from "@/components/common/DialogWrapper";
 import { useEmailAccountMutations } from "../hooks/useEmailAccountMutations";
+import { DialogTriggerProps } from "@/types/ui";
 import type { PermissionLevel } from "../types";
 
-interface ShareEmailAccountDialogProps {
+interface ShareEmailAccountDialogProps extends DialogTriggerProps {
   emailAccountId: string;
   emailAddress: string;
-  trigger: React.ReactNode;
 }
 
 export function ShareEmailAccountDialog({
