@@ -1,54 +1,56 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+// @ts-ignore
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+  // Gérer les requêtes OPTIONS pour CORS
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { provider } = await req.json()
-    console.log("Fetching OAuth config for provider:", provider)
+    const { provider } = await req.json();
 
-    let clientId = ""
-    let clientSecret = ""
-
+    // Récupérer les variables d'environnement en fonction du provider
+    let config;
     switch (provider) {
       case "gmail":
-        clientId = Deno.env.get("GOOGLE_CLIENT_ID") || ""
-        clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET") || ""
-        break
+        config = {
+          clientId: Deno.env.get("GOOGLE_CLIENT_ID"),
+          clientSecret: Deno.env.get("GOOGLE_CLIENT_SECRET"),
+        };
+        break;
       case "outlook":
-        clientId = Deno.env.get("MICROSOFT_CLIENT_ID") || ""
-        clientSecret = Deno.env.get("MICROSOFT_CLIENT_SECRET") || ""
-        break
+        config = {
+          clientId: Deno.env.get("MICROSOFT_CLIENT_ID"),
+          clientSecret: Deno.env.get("MICROSOFT_CLIENT_SECRET"),
+        };
+        break;
       default:
-        throw new Error("Provider non supporté")
+        throw new Error(`Provider non supporté: ${provider}`);
     }
 
-    if (!clientId || !clientSecret) {
-      throw new Error("Configuration OAuth manquante")
+    // Vérifier que la configuration est complète
+    if (!config.clientId || !config.clientSecret) {
+      throw new Error(`Configuration OAuth manquante pour ${provider}`);
     }
 
-    return new Response(
-      JSON.stringify({ clientId, clientSecret }),
-      { 
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200 
-      },
-    )
+    return new Response(JSON.stringify(config), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
   } catch (error) {
-    console.error("Error in get-oauth-config:", error)
+    console.error("Error in get-oauth-config:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { 
+      {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400 
-      },
-    )
+        status: 400,
+      }
+    );
   }
-})
+});
