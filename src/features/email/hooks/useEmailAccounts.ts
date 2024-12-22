@@ -24,32 +24,49 @@ export function useEmailAccounts() {
           return [];
         }
 
-        const { data, error } = await supabase
+        // First fetch owned accounts
+        const { data: ownedAccounts, error: ownedError } = await supabase
           .from("email_accounts")
           .select(`
             *,
-            account_permissions (
+            account_permissions!inner (
               permission_level
             )
-          `);
-        
-        if (error) {
-          console.error("Error fetching accounts:", error);
-          toast({
-            title: "Erreur",
-            description: "Impossible de charger vos comptes email",
-            variant: "destructive",
-          });
-          return [];
+          `)
+          .eq('user_id', user.id);
+
+        if (ownedError) {
+          console.error("Error fetching owned accounts:", ownedError);
+          throw ownedError;
         }
 
-        console.log("Fetched accounts:", data);
-        return data as EmailAccount[];
+        // Then fetch shared accounts
+        const { data: sharedAccounts, error: sharedError } = await supabase
+          .from("email_accounts")
+          .select(`
+            *,
+            account_permissions!inner (
+              permission_level
+            )
+          `)
+          .neq('user_id', user.id)
+          .eq('account_permissions.granted_to_user_id', user.id);
+
+        if (sharedError) {
+          console.error("Error fetching shared accounts:", sharedError);
+          throw sharedError;
+        }
+
+        // Combine and return all accounts
+        const allAccounts = [...(ownedAccounts || []), ...(sharedAccounts || [])];
+        console.log("Fetched accounts:", allAccounts);
+        
+        return allAccounts as EmailAccount[];
       } catch (error) {
-        console.error("Unexpected error:", error);
+        console.error("Error fetching accounts:", error);
         toast({
           title: "Erreur",
-          description: "Une erreur inattendue s'est produite",
+          description: "Impossible de charger vos comptes email",
           variant: "destructive",
         });
         return [];
