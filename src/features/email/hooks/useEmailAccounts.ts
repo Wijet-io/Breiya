@@ -29,7 +29,7 @@ export function useEmailAccounts() {
           .from("email_accounts")
           .select(`
             *,
-            account_permissions!inner (
+            account_permissions (
               permission_level
             )
           `)
@@ -45,7 +45,7 @@ export function useEmailAccounts() {
           .from("email_accounts")
           .select(`
             *,
-            account_permissions!inner (
+            account_permissions (
               permission_level
             )
           `)
